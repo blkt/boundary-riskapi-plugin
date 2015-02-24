@@ -1,0 +1,168 @@
+/*
+  This file contains a dump of the metrics defined on Boundary and
+  it's not used in any part of this plugin, it's just a memo.
+ */
+{
+   "result": [
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+         "displayName": "Riskapi overall compute (mean)",
+         "displayNameShort": "Riskapi overall compute (mean)",
+         "description": "Riskapi overall compute (mean)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50",
+         "displayName": "Riskapi overall compute (percentile 50)",
+         "displayNameShort": "Riskapi overall compute (percentile 50)",
+         "description": "Riskapi overall compute (percentile 50)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95",
+         "displayName": "Riskapi overall compute (percentile 95)",
+         "displayNameShort": "Riskapi overall copmute (percentile 95)",
+         "description": "Riskapi overall compute (percentile 95)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT",
+         "displayName": "Riskapi overall errors (count)",
+         "displayNameShort": "Riskapi overall errors (count)",
+         "description": "Riskapi overall errors, total count",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_ERRORS_ONE",
+         "displayName": "Riskapi overall errors (one)",
+         "displayNameShort": "Riskapi overall errors (one)",
+         "description": "Riskapi overall errors, one minute mean",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT",
+         "displayName": "Riskapi overall throughput (count)",
+         "displayNameShort": "Riskapi overall throughput (count)",
+         "description": "Riskapi overall throughput, total count",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE",
+         "displayName": "Riskapi overall throughput (one)",
+         "displayNameShort": "Riskapi overall throughput (one)",
+         "description": "Riskapi overall throughput, one minute mean",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN",
+         "displayName": "Riskapi overall time (mean)",
+         "displayNameShort": "Riskapi overall time (mean)",
+         "description": "Riskapi overall time (mean)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50",
+         "displayName": "Riskapi overall time (percentile 50)",
+         "displayNameShort": "Riskapi overall time (percentile 50)",
+         "description": "Riskapi overall time (percentile 50)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95",
+         "displayName": "Riskapi overall time (percentile 95)",
+         "displayNameShort": "Riskapi overall time (percentile 95)",
+         "description": "Riskapi overall time (percentile 95)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI",
+         "displayName": "Riskapi queue length",
+         "displayNameShort": "Riskapi queue length",
+         "description": "Riskapi queue length",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN",
+         "displayName": "Riskapi queue request time (mean)",
+         "displayNameShort": "Riskapi queue request time (mean)",
+         "description": "Riskapi queue request time (mean)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50",
+         "displayName": "Riskapi queue request time (percentile 50)",
+         "displayNameShort": "Riskapi queue request time (percentile 50)",
+         "description": "Riskapi queue request time readings (percentile 50)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95",
+         "displayName": "Riskapi queue request time (percentile 95)",
+         "displayNameShort": "Riskapi queue request time (percentile 95)",
+         "description": "Riskapi queue request time readings (percentile 95)",
+         "unit": "duration",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT",
+         "displayName": "Riskapi throughput rapi (count)",
+         "displayNameShort": "Riskapi throughput rapi (count)",
+         "description": "Riskapi throughput method rapi readings (count)",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      },
+      {
+         "name": "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE",
+         "displayName": "Riskapi throughput rapi (one)",
+         "displayNameShort": "Riskapi throughput rapi (one)",
+         "description": "Riskapi throughput method rapi readings (one)",
+         "unit": "number",
+         "defaultAggregate": "AVG",
+         "isDisabled": 0,
+         "defaultResolutionMS": 5000
+      }
+   ]
+}
