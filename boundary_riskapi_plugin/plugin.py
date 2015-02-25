@@ -145,6 +145,9 @@ def report_metrics(metrics, hostname, timestamp=None):
         print msg
         sys.stdout.flush()
 
+def keep_looping_p():
+    return True
+
 def do_your_job():
     """Extracts raw metrics, flattens them, boundarifies their metrics
     name, and writes them to standard output once every
@@ -160,7 +163,7 @@ def do_your_job():
     paths = PATHS
     hostname = HOSTNAME
 
-    while True:
+    while keep_looping_p():
         timestamp = time.time()
         raw_metrics = get_metrics(base_url, port, path1, paths)
         flatteneds = boundarify_metrics(raw_metrics)

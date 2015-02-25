@@ -36,7 +36,7 @@
       "title": "Port",
       "name": "riskapi_port",
       "description": "Port component of the URL",
-      "type": "string",
+      "type": "integer",
       "default": "5565",
       "required": true
     },
@@ -44,7 +44,7 @@
       "title": "Poll Interval",
       "name": "riskapi_poll_interval",
       "description": "Interval between sends (milliseconds)",
-      "type": "string",
+      "type": "integer",
       "default": "5000",
       "required": true
     }
