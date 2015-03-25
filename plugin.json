@@ -1,0 +1,52 @@
+{
+  "description": "Monitors StatPro Riskapi instances",
+  "icon": "statpro.png",
+  "command": "python -u boundary_riskapi_plugin/plugin.py",
+  "metrics": [
+    "STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+    "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50",
+    "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95",
+    "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT",
+    "STATPRO_RISKAPI_OVERALL_ERRORS_ONE",
+    "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT",
+    "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE",
+    "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN",
+    "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50",
+    "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95",
+    "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI",
+    "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN",
+    "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50",
+    "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95",
+    "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT",
+    "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE"
+  ],
+  "dashboards": [{"name": "Riskapi NG",
+                   "layout":
+                   "d-w=3&d-h=3&d-pad=0&d-slider=1&d-bg=none&d-g-STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN=1-1-1-1-t&d-g-STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95=1-1-1-1-b&d-g-STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN=2-1-1-1-t&d-g-STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95=2-1-1-1-b&d-g-STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50=0-0-1-1&d-g-STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50=1-0-1-1&d-g-STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50=2-0-1-1&d-g-STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN=0-1-1-1-t&d-g-STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95=0-1-1-1-b&d-sg-cpu=0-2-1-1-t&d-sg-mem=0-2-1-1-b&d-g-STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE=2-2-1-1-t&d-g-STATPRO_RISKAPI_OVERALL_ERRORS_ONE=2-2-1-1-b&d-g-STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT=1-2-1-1-t&d-g-STATPRO_RISKAPI_OVERALL_ERRORS_COUNT=1-2-1-1-b"}],
+  "paramSchema": [
+    {
+      "title": "Base URL",
+      "name": "riskapi_base_url",
+      "description": "Base URL to query for values",
+      "type": "string",
+      "default": "localhost",
+      "required": true
+    },
+    {
+      "title": "Port",
+      "name": "riskapi_port",
+      "description": "Port component of the URL",
+      "type": "integer",
+      "default": "5565",
+      "required": true
+    },
+    {
+      "title": "Poll Interval",
+      "name": "riskapi_poll_interval",
+      "description": "Interval between sends (milliseconds)",
+      "type": "integer",
+      "default": "5000",
+      "required": true
+    }
+  ]
+}
