@@ -1,8 +1,6 @@
 from StringIO import StringIO
-from mock import patch, call, sentinel, mock_open, MagicMock
-from nose.tools import (assert_true, assert_false, assert_equal,
-                        assert_is_instance, assert_is_none,
-                        assert_is_not_none, assert_items_equal)
+from mock import patch, call, mock_open, MagicMock
+from nose.tools import (assert_true, assert_equal, assert_items_equal)
 import time as time
 
 import boundary_riskapi_plugin.plugin as plugin
@@ -27,7 +25,7 @@ class TestUtils(object):
     def test_parse_params_1(self):
         with patch("boundary_riskapi_plugin.plugin.open",
                    mock_open(read_data=PARAMS_JSON_1),
-                   create=True) as m:
+                   create=True):
             params = plugin.parse_params()
         expected = dict(riskapi_base_url="localhost",
                         riskapi_port="5565",
@@ -38,7 +36,7 @@ class TestUtils(object):
     def test_parse_params_2(self):
         with patch("boundary_riskapi_plugin.plugin.open",
                    mock_open(read_data=PARAMS_JSON_2),
-                   create=True) as m:
+                   create=True):
             params = plugin.parse_params()
         expected = dict(riskapi_base_url="localhost",
                         riskapi_port=5565,
