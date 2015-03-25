@@ -1,9 +1,7 @@
-# boundary-riskapi-plugin
-
+# Boundary RiskApi Plugin
 Boundary Plugin for StatPro Riskapi
 
 ### Prerequisites
-
 |     OS    | Linux | Windows | SmartOS | OS X |
 |:----------|:-----:|:-------:|:-------:|:----:|
 | Supported |   v   |         |         |      |
@@ -13,11 +11,9 @@ Boundary Plugin for StatPro Riskapi
 | Required |         |    +   |      |
 
 ### Plugin Setup
-
 None
 
 #### Plugin Configuration Fields
-
 |Field Name   |Description                                                                         |
 |:------------|:-----------------------------------------------------------------------------------|
 |Poll Interval|The Poll Interval to call the command in milliseconds. Defaults to 1000 milliseconds|
