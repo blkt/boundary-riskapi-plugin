@@ -45,7 +45,7 @@
       "name": "riskapi_poll_interval",
       "description": "Interval between sends (milliseconds)",
       "type": "integer",
-      "default": "5000",
+      "default": "1000",
       "required": true
     }
   ]

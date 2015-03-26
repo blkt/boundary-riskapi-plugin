@@ -8,8 +8,8 @@ import urllib
 import logging
 log = logging.getLogger(__name__)
 
-HOSTNAME = socket.gethostname()
-POLL_INTERVAL = 5000
+HOSTNAME = socket.getfqdn()
+POLL_INTERVAL = 1000
 
 BASE_URL = "localhost"
 PORT = "5565"
