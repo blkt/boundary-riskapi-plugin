@@ -90,11 +90,11 @@ def init_metrics(base_url="localhost", port="5565", path1="_metrics"):
                               field="value/one",
                               base_url=base_url, port=port, path1=path1),
            "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT":
-            gen_delta_identity_func(path="overall.errors",
+            gen_delta_identity_func(path="overall.throughput",
                               field="value/count",
                               base_url=base_url, port=port, path1=path1),
            "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE":
-            gen_identity_func(path="overall.errors",
+            gen_identity_func(path="overall.throughput",
                               field="value/one",
                               base_url=base_url, port=port, path1=path1),
            "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN":
@@ -154,7 +154,7 @@ def get_metrics_data(metrics):
     recieved data from JSON to a Python dictionary.
 
     """
-    dicts = []
+    dicts = dict()
     fails = []
     urls = sorted({m.get_url() for k, m in metrics.iteritems()})
 
@@ -162,7 +162,7 @@ def get_metrics_data(metrics):
         try:
             f = urllib.urlopen(url)
             js = json.load(f)
-            dicts.append([url, js])
+            dicts[url] = js
         except IOError:
             fails.append(url)
 

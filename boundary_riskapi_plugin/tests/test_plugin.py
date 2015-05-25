@@ -66,8 +66,8 @@ class TestPlugin(object):
             m = MagicMock()
             m.read.side_effect = ["""{"value": {"arithetic_mean": 0}}"""]
             url_mock.urlopen.return_value = m
-            expected = ([["http://localhost:5565/_metrics/overall.compute",
-                          dict(value=dict(arithetic_mean=0))]],
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                         dict(value=dict(arithetic_mean=0))},
                         [])
             calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read()]
@@ -88,10 +88,10 @@ class TestPlugin(object):
             m.read.side_effect = ["""{"value": {"arithmetic_mean": 0}}""",
                                   """{"value": {"one": 0}}"""]
             url_mock.urlopen.return_value = m
-            expected = ([["http://localhost:5565/_metrics/overall.compute",
-                          dict(value=dict(arithmetic_mean=0))],
-                         ["http://localhost:5565/_metrics/overall.errors",
-                          dict(value=dict(one=0))]],
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                         dict(value=dict(arithmetic_mean=0)),
+                         "http://localhost:5565/_metrics/overall.errors":
+                         dict(value=dict(one=0))},
                         [])
             calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read(),
@@ -114,8 +114,8 @@ class TestPlugin(object):
             m.read.side_effect = ["""{"value": {"arithmetic_mean": 0}}""",
                                   IOError()]
             url_mock.urlopen.return_value = m
-            expected = ([["http://localhost:5565/_metrics/overall.compute",
-                          dict(value=dict(arithmetic_mean=0))]],
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                          dict(value=dict(arithmetic_mean=0))},
                         ["http://localhost:5565/_metrics/overall.errors"])
             calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read(),
@@ -137,9 +137,9 @@ class TestPlugin(object):
             m = MagicMock()
             m.read.side_effect = ["""{"value": {"percentile": {"50": 0}, "arithmetic_mean": 0}}"""]
             url_mock.urlopen.return_value = m
-            expected = ([["http://localhost:5565/_metrics/overall.compute",
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
                           dict(value=dict(arithmetic_mean=0,
-                                          percentile={"50": 0}))]],
+                                          percentile={"50": 0}))},
                         [])
             calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read()]
@@ -233,6 +233,71 @@ class TestPlugin(object):
         assert_equal(fake_out.getvalue(), expected)
 
     def test_main(self):
-        with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
-            with patch("boundary_riskapi_plugin.plugin.keep_looping_p", side_effect=[True, False]):
-                plugin.main()
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = [
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}""",
+                """{"value": {"count": 0, "one": 0}}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": 0}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}"""]
+            url_mock.urlopen.return_value = m
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                          dict(value=dict(arithmetic_mean=0,
+                                          percentile={"50": 0, "95": 0})),
+                         "http://localhost:5565/_metrics/overall.errors":
+                          dict(value=dict(count=0, one=0)),
+                         "http://localhost:5565/_metrics/overall.throughput":
+                          dict(value=dict(count=0, one=0)),
+                         "http://localhost:5565/_metrics/overall.time":
+                          dict(value=dict(arithmetic_mean=0,
+                                          percentile={"50": 0, "95": 0})),
+                         "http://localhost:5565/_metrics/queue-length-rapi":
+                          dict(value=0),
+                         "http://localhost:5565/_metrics/request_time-queue-rapi_poller":
+                          dict(value=dict(arithmetic_mean=0,
+                                          percentile={"50": 0, "95": 0})),
+                         "http://localhost:5565/_metrics/throughput-rapi":
+                          dict(value=dict(count=0, one=0))},
+                        [])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
+                     call().read(),
+                     call("http://localhost:5565/_metrics/overall.errors"),
+                     call().read(),
+                     call("http://localhost:5565/_metrics/overall.time"),
+                     call().read(),
+                     call("http://localhost:5565/_metrics/queue-length-rapi"),
+                     call().read(),
+                     call("http://localhost:5565/_metrics/queue-length-rapi"),
+                     call().read(),
+                     call("http://localhost:5565/_metrics/request_time-queue-rapi_poller"),
+                     call().read(),
+                     call("http://localhost:5565/_metrics/throughput-rapi"),
+                     call().read()]
+            resulting_output = """\
+STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN 0 mmori 123456789
+STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN 0 mmori 123456789
+STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE 0 mmori 123456789
+STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN 0 mmori 123456789
+STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_ERRORS_ONE 0 mmori 123456789
+STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50 0 mmori 123456789
+STATPRO_RISKAPI_OVERALL_ERRORS_COUNT 0 mmori 123456789
+STATPRO_RISKAPI_QUEUE_LENGTH_RAPI 0 mmori 123456789
+"""
+            with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
+                with patch("boundary_riskapi_plugin.plugin.keep_looping_p",
+                           side_effect=[True, False]):
+                    with patch("sys.stdout", new=StringIO()) as fake_out:
+                        with patch("time.time", return_value=123456789):
+                            plugin.main()
+                            assert_equal(fake_out.getvalue(), resulting_output)
