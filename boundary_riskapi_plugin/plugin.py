@@ -1,5 +1,4 @@
 import json
-import re
 import socket
 import sys
 import time
@@ -14,25 +13,126 @@ POLL_INTERVAL = 1000
 BASE_URL = "localhost"
 PORT = "5565"
 PATH1 = "_metrics"
-PATHS = ["overall.compute", "overall.errors", "overall.throughput",
-         "overall.time", "queue-length-rapi", "request_time-queue-rapi",
-         "throughput-rapi"]
-TO_SEND = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
-           "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50",
-           "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95",
-           "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT",
-           "STATPRO_RISKAPI_OVERALL_ERRORS_ONE",
-           "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT",
-           "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE",
-           "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN",
-           "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50",
-           "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95",
-           "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI",
-           "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN",
-           "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50",
-           "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95",
-           "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT",
-           "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE"]
+
+def encoded_json_field(field):
+    splitted = field.split("/")
+
+    def inner(data):
+        datum = data
+        for step in splitted:
+            datum = datum[step]
+        return datum
+
+    return inner
+
+class UrlBasedCalculator(object):
+
+    def __init__(self, base_url, port, path1):
+        partial_url = "http://%s:%s/%s/" % (base_url, port, path1)
+        self.pattern = partial_url + "%s"
+
+    def get_url(self):
+        raise NotImplementedError
+
+class gen_identity_func(UrlBasedCalculator):
+
+    def __init__(self, path, field, base_url, port, path1):
+        super(gen_identity_func, self).__init__(base_url, port, path1)
+        self.path = path
+        self.field = field
+        self.url = self.pattern % path
+        self.extractorf = encoded_json_field(field)
+
+    def __call__(self, data):
+        return self.extractorf(data)
+
+    def get_url(self):
+        return self.url
+
+class gen_delta_identity_func(UrlBasedCalculator):
+
+    def __init__(self, path, field, base_url, port, path1):
+        super(gen_delta_identity_func, self).__init__(base_url, port, path1)
+        self.previous_value = 0
+        self.path = path
+        self.field = field
+        self.url = self.pattern % path
+        self.extractorf = encoded_json_field(field)
+
+    def __call__(self, data):
+        current_value = self.extractorf(data)
+        res = current_value - self.previous_value
+        self.previous_value = current_value
+        return res
+
+    def get_url(self):
+        return self.url
+
+def init_metrics(base_url="localhost", port="5565", path1="_metrics"):
+    return {"STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN":
+            gen_identity_func(path="overall.compute",
+                              field="value/arithmetic_mean",
+                              base_url=base_url, port=port, path1=path1),
+            "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50":
+            gen_identity_func(path="overall.compute",
+                              field="value/percentile/50",
+                              base_url=base_url, port=port, path1=path1),
+            "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95":
+            gen_identity_func(path="overall.compute",
+                              field="value/percentile/95",
+                              base_url=base_url, port=port, path1=path1),
+            "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT":
+            gen_delta_identity_func(path="overall.errors",
+                                    field="value/count",
+                              base_url=base_url, port=port, path1=path1),
+            "STATPRO_RISKAPI_OVERALL_ERRORS_ONE":
+            gen_identity_func(path="overall.errors",
+                              field="value/one",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT":
+            gen_delta_identity_func(path="overall.errors",
+                              field="value/count",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE":
+            gen_identity_func(path="overall.errors",
+                              field="value/one",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN":
+            gen_identity_func(path="overall.time",
+                              field="value/arithmetic_mean",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50":
+            gen_identity_func(path="overall.time",
+                              field="value/percentile/50",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95":
+            gen_identity_func(path="overall.time",
+                              field="value/percentile/95",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI":
+            gen_identity_func(path="queue-length-rapi",
+                              field="value",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN":
+            gen_identity_func(path="request_time-queue-rapi_poller",
+                              field="value/arithmetic_mean",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50":
+            gen_identity_func(path="request_time-queue-rapi_poller",
+                              field="value/percentile/50",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95":
+            gen_identity_func(path="request_time-queue-rapi_poller",
+                              field="value/percentile/95",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT":
+            gen_identity_func(path="throughput-rapi",
+                              field="value/count",
+                              base_url=base_url, port=port, path1=path1),
+           "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE":
+            gen_identity_func(path="throughput-rapi",
+                              field="value/one",
+                              base_url=base_url, port=port, path1=path1)}
 
 def parse_params():
     """Parses and returns the contents of the plugin's "param.json" file.
@@ -46,25 +146,7 @@ def parse_params():
         pass
     return plugin_params
 
-def get_metric_urls(base_url, port, path1, paths):
-    """Builds a list of URLs to visit to fetch metrics data.
-
-    """
-    urls = []
-
-    for path in paths:
-        url = "http://%s:%s/%s/%s" % (base_url, port, path1, path)
-        urls.append(url)
-
-    return urls
-
-def boundarify_metric_name(name):
-    (raw_name, substs) = re.subn(r"[\.-]", "_", name)
-    metric_name = u"STATPRO_RISKAPI_" + raw_name
-
-    return metric_name
-
-def get_metrics(base_url, port, path1, paths):
+def get_metrics_data(metrics):
     """Retrieves the raw data from the Riskapi node reachable at the given
     base_url, via the given port.
 
@@ -74,37 +156,19 @@ def get_metrics(base_url, port, path1, paths):
     """
     dicts = []
     fails = []
-    urls = get_metric_urls(base_url, port, path1, paths)
-    pairs = zip(paths, urls)
+    urls = sorted({m.get_url() for k, m in metrics.iteritems()})
 
-    for path, url in pairs:
+    for url in urls:
         try:
             f = urllib.urlopen(url)
             js = json.load(f)
-            dicts.append([path, js])
+            dicts.append([url, js])
         except IOError:
             fails.append(url)
 
     return (dicts, fails)
 
-def recursive_flatten_folsom_metric(metric, tree):
-    """Flattens the metric (a Python dictionary) attaching the names as it
-    visits the tree.
-
-    """
-    if isinstance(tree, dict):
-        res = []
-        for key, subtree in tree.iteritems():
-            partial = "_".join([metric, key])
-            res.extend(recursive_flatten_folsom_metric(partial, subtree))
-        return res
-    else:
-        return [(metric, tree)]
-
-def flatten_folsom_metric(metric, tree):
-    return dict(sorted(recursive_flatten_folsom_metric(metric, tree)))
-
-def boundarify_metrics(metrics_tree):
+def boundarify_metrics(metrics, raw_data):
     """Converts the raw metric trees (dictionaries) into a sequence of
     pairs (metric, measure).
 
@@ -114,23 +178,18 @@ def boundarify_metrics(metrics_tree):
     result.
 
     """
-    (metrics, failures) = metrics_tree
+    (dicts, failures) = raw_data
 
     if failures:
         for failure in failures:
             log.warn("Failed getting metrics for %s" % failure)
 
-    flatteneds = dict()
-
-    for metric in metrics:
-        metric_name = boundarify_metric_name(metric[0])
-        flatteneds.update(flatten_folsom_metric(metric_name, metric[1]["value"]))
-
     results = dict()
-    for key, val in flatteneds.iteritems():
-        bdry_name = key.upper()
-        if bdry_name in TO_SEND:
-            results.update({bdry_name: val})
+    for bdry_name, calculator in metrics.iteritems():
+        key = calculator.get_url()
+        if key in dicts:
+            data = dicts[key]
+            results.update({bdry_name: calculator(data)})
 
     return results
 
@@ -147,7 +206,7 @@ def report_metrics(metrics, hostname, timestamp=None):
 def keep_looping_p():
     return True
 
-def do_your_job():
+def main():
     """Extracts raw metrics, flattens them, boundarifies their metrics
     name, and writes them to standard output once every
     POLL_INTERVAL milliseconds.
@@ -159,15 +218,16 @@ def do_your_job():
     poll_interval = int(params.get("riskapi_poll_interval", POLL_INTERVAL) / 1000)
 
     path1 = PATH1
-    paths = PATHS
     hostname = HOSTNAME
+
+    metrics = init_metrics(base_url, port, path1)
 
     while keep_looping_p():
         timestamp = time.time()
-        raw_metrics = get_metrics(base_url, port, path1, paths)
-        flatteneds = boundarify_metrics(raw_metrics)
+        raw_data = get_metrics_data(metrics)
+        flatteneds = boundarify_metrics(metrics, raw_data)
         report_metrics(flatteneds.iteritems(), hostname, timestamp=timestamp)
         time.sleep(poll_interval)
 
 if __name__ == '__main__':
-    do_your_job()
+    main()
