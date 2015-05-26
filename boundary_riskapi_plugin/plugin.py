@@ -14,59 +14,53 @@ BASE_URL = "localhost"
 PORT = "5565"
 PATH1 = "_metrics"
 
+class UnableToExtractError(RuntimeError):
+    pass
+
 def encoded_json_field(field):
     splitted = field.split("/")
 
     def inner(data):
         datum = data
         for step in splitted:
-            datum = datum[step]
+            if isinstance(datum, dict) and step in datum:
+                datum = datum[step]
+            else:
+                raise UnableToExtractError("%s not found in %s" % (field, data))
         return datum
 
     return inner
 
 class UrlBasedCalculator(object):
 
-    def __init__(self, base_url, port, path1):
-        partial_url = "http://%s:%s/%s/" % (base_url, port, path1)
-        self.pattern = partial_url + "%s"
-
-    def get_url(self):
-        raise NotImplementedError
-
-class gen_identity_func(UrlBasedCalculator):
-
     def __init__(self, path, field, base_url, port, path1):
-        super(gen_identity_func, self).__init__(base_url, port, path1)
         self.path = path
         self.field = field
-        self.url = self.pattern % path
+        self.url = "http://%s:%s/%s/%s" % (base_url, port, path1, path)
         self.extractorf = encoded_json_field(field)
-
-    def __call__(self, data):
-        return self.extractorf(data)
 
     def get_url(self):
         return self.url
 
+class gen_identity_func(UrlBasedCalculator):
+
+    def __init__(self, path, field, base_url, port, path1):
+        super(gen_identity_func, self).__init__(path, field, base_url, port, path1)
+
+    def __call__(self, data):
+        return self.extractorf(data)
+
 class gen_delta_identity_func(UrlBasedCalculator):
 
     def __init__(self, path, field, base_url, port, path1):
-        super(gen_delta_identity_func, self).__init__(base_url, port, path1)
+        super(gen_delta_identity_func, self).__init__(path, field, base_url, port, path1)
         self.previous_value = 0
-        self.path = path
-        self.field = field
-        self.url = self.pattern % path
-        self.extractorf = encoded_json_field(field)
 
     def __call__(self, data):
         current_value = self.extractorf(data)
         res = current_value - self.previous_value
         self.previous_value = current_value
         return res
-
-    def get_url(self):
-        return self.url
 
 def init_metrics(base_url="localhost", port="5565", path1="_metrics"):
     return {"STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN":
@@ -156,7 +150,7 @@ def get_metrics_data(metrics):
     """
     dicts = dict()
     fails = []
-    urls = sorted({m.get_url() for k, m in metrics.iteritems()})
+    urls = sorted({m.get_url() for m in metrics.itervalues()})
 
     for url in urls:
         try:
@@ -189,7 +183,11 @@ def boundarify_metrics(metrics, raw_data):
         key = calculator.get_url()
         if key in dicts:
             data = dicts[key]
-            results.update({bdry_name: calculator(data)})
+            try:
+                value = calculator(data)
+                results.update({bdry_name: value})
+            except UnableToExtractError as e:
+                log.warn(e)
 
     return results
 

@@ -149,6 +149,27 @@ class TestPlugin(object):
             assert_equal(ress, expected)
             url_mock.urlopen.assert_has_calls(calls)
 
+    def test_get_metrics_data_5(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50"]
+        metric = {key: metrics[key] for key in keys}
+
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = ["""{"value": 0}"""]
+            url_mock.urlopen.return_value = m
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                          dict(value=0)},
+                        [])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
+                     call().read()]
+
+            ress = plugin.get_metrics_data(metric)
+
+            assert_equal(ress, expected)
+            url_mock.urlopen.assert_has_calls(calls)
+
     def test_boundarify_metrics_1(self):
         metrics = plugin.init_metrics()
         metrics_tree = ({}, [])
@@ -232,7 +253,7 @@ class TestPlugin(object):
 
         assert_equal(fake_out.getvalue(), expected)
 
-    def test_main(self):
+    def test_main_ok(self):
         with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
             m = MagicMock()
             m.read.side_effect = [
@@ -244,60 +265,66 @@ class TestPlugin(object):
                 """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
                 """{"value": {"count": 0, "one": 0}}"""]
             url_mock.urlopen.return_value = m
-            expected = ({"http://localhost:5565/_metrics/overall.compute":
-                          dict(value=dict(arithmetic_mean=0,
-                                          percentile={"50": 0, "95": 0})),
-                         "http://localhost:5565/_metrics/overall.errors":
-                          dict(value=dict(count=0, one=0)),
-                         "http://localhost:5565/_metrics/overall.throughput":
-                          dict(value=dict(count=0, one=0)),
-                         "http://localhost:5565/_metrics/overall.time":
-                          dict(value=dict(arithmetic_mean=0,
-                                          percentile={"50": 0, "95": 0})),
-                         "http://localhost:5565/_metrics/queue-length-rapi":
-                          dict(value=0),
-                         "http://localhost:5565/_metrics/request_time-queue-rapi_poller":
-                          dict(value=dict(arithmetic_mean=0,
-                                          percentile={"50": 0, "95": 0})),
-                         "http://localhost:5565/_metrics/throughput-rapi":
-                          dict(value=dict(count=0, one=0))},
-                        [])
-            calls = [call("http://localhost:5565/_metrics/overall.compute"),
-                     call().read(),
-                     call("http://localhost:5565/_metrics/overall.errors"),
-                     call().read(),
-                     call("http://localhost:5565/_metrics/overall.time"),
-                     call().read(),
-                     call("http://localhost:5565/_metrics/queue-length-rapi"),
-                     call().read(),
-                     call("http://localhost:5565/_metrics/queue-length-rapi"),
-                     call().read(),
-                     call("http://localhost:5565/_metrics/request_time-queue-rapi_poller"),
-                     call().read(),
-                     call("http://localhost:5565/_metrics/throughput-rapi"),
-                     call().read()]
-            resulting_output = """\
-STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN 0 mmori 123456789
-STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN 0 mmori 123456789
-STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE 0 mmori 123456789
-STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN 0 mmori 123456789
-STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_ERRORS_ONE 0 mmori 123456789
-STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50 0 mmori 123456789
-STATPRO_RISKAPI_OVERALL_ERRORS_COUNT 0 mmori 123456789
-STATPRO_RISKAPI_QUEUE_LENGTH_RAPI 0 mmori 123456789
-"""
+
+            expected_lines = set([
+                "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI 0 mmori 123456789"])
             with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
                 with patch("boundary_riskapi_plugin.plugin.keep_looping_p",
                            side_effect=[True, False]):
                     with patch("sys.stdout", new=StringIO()) as fake_out:
                         with patch("time.time", return_value=123456789):
                             plugin.main()
-                            assert_equal(fake_out.getvalue(), resulting_output)
+                            resulting_lines = set(fake_out.getvalue().splitlines())
+                            assert_equal(resulting_lines, expected_lines)
+
+    def test_main_failure(self):
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = [
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}""",
+                """{"value": 0}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": 0}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}"""]
+            url_mock.urlopen.return_value = m
+
+            expected_lines = set([
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI 0 mmori 123456789"])
+            with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
+                with patch("boundary_riskapi_plugin.plugin.keep_looping_p",
+                           side_effect=[True, False]):
+                    with patch("sys.stdout", new=StringIO()) as fake_out:
+                        with patch("time.time", return_value=123456789):
+                            plugin.main()
+                            resulting_lines = set(fake_out.getvalue().splitlines())
+                            assert_equal(resulting_lines, expected_lines)
