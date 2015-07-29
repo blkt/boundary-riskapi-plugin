@@ -17,10 +17,8 @@ None
 |Field Name   |Description                                                                         |
 |:------------|:-----------------------------------------------------------------------------------|
 |Poll Interval|The Poll Interval to call the command in milliseconds. Defaults to 1000 milliseconds|
-|Hostname     |IP Address or hostname that contains the RabbitMQ instance                          |
-|Port         |Listening port of the RabbitMQ management plugin                                    |
-|User         |User name to use for authenticate against the RabbitMQ management plugin            |
-|Password     |Password to use for authenticate against the RabbitMQ management plugin             |
+|Base URL     |Base URL used to reach the RiskApi instance                                         |
+|Port         |Listening port of the RiskApi instance                                              |
 
 ### Metrics Collected
 |Metric Name                                             |Description                             |
