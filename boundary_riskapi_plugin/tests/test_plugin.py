@@ -52,179 +52,179 @@ class TestUtils(object):
 
         assert_equal(params, expected)
 
-    def test_get_metric_urls_1(self):
-        base_url = "localhost"
-        port = "5565"
-        path1 = "_metrics"
-        paths = ["foo", "bar", "baz"]
-        urls = plugin.get_metric_urls(base_url, port, path1, paths)
-        expected = ["http://localhost:5565/_metrics/foo",
-                    "http://localhost:5565/_metrics/bar",
-                    "http://localhost:5565/_metrics/baz"]
-
-        assert_items_equal(urls, expected)
-
-    def test_get_metric_urls_2(self):
-        base_url = "localhost"
-        port = 5565
-        path1 = "_metrics"
-        paths = ["foo", "bar", "baz"]
-        urls = plugin.get_metric_urls(base_url, port, path1, paths)
-        expected = ["http://localhost:5565/_metrics/foo",
-                    "http://localhost:5565/_metrics/bar",
-                    "http://localhost:5565/_metrics/baz"]
-
-        assert_items_equal(urls, expected)
-
-    def test_boundarify_name_1(self):
-        raw_name = "FOO"
-        name = plugin.boundarify_metric_name(raw_name)
-
-        assert_equal(name, u"STATPRO_RISKAPI_FOO")
-
-    def test_boundarify_name_2(self):
-        raw_name = "FOO.BAR"
-        name = plugin.boundarify_metric_name(raw_name)
-
-        assert_equal(name, u"STATPRO_RISKAPI_FOO_BAR")
-
-    def test_boundarify_name_3(self):
-        raw_name = "FOO-BAR"
-        name = plugin.boundarify_metric_name(raw_name)
-
-        assert_equal(name, u"STATPRO_RISKAPI_FOO_BAR")
-
-    def test_boundarify_name_4(self):
-        raw_name = "FOO.BAR-BAZ"
-        name = plugin.boundarify_metric_name(raw_name)
-
-        assert_equal(name, u"STATPRO_RISKAPI_FOO_BAR_BAZ")
-
-    def test_flatten_folsom_metric_1(self):
-        metric = "metric"
-        tree = {"foo": 1}
-        flattened = plugin.flatten_folsom_metric(metric, tree)
-
-        assert_equal(flattened, {"metric_foo": 1})
-
-    def test_flatten_folsom_metric_2(self):
-        metric = "metric"
-        tree = {"foo": {"bar": 2}}
-        flattened = plugin.flatten_folsom_metric(metric, tree)
-
-        assert_equal(flattened, {"metric_foo_bar": 2})
-
-    def test_flatten_folsom_metric_3(self):
-        metric = "metric"
-        tree = {"foo": {"bar": 3, "baz": 4}}
-        flattened = plugin.flatten_folsom_metric(metric, tree)
-
-        assert_equal(flattened, {"metric_foo_bar": 3,
-                                 "metric_foo_baz": 4})
-
-    def test_flatten_folsom_metric_4(self):
-        metric = "metric"
-        tree = {"foo": {"bar": 3, "baz": 4}, "quux": {"fubar": 5}}
-        flattened = plugin.flatten_folsom_metric(metric, tree)
-
-        assert_equal(flattened, {"metric_foo_bar": 3,
-                                 "metric_foo_baz": 4,
-                                 "metric_quux_fubar": 5})
-
     def test_keep_looping_p(self):
         assert_true(plugin.keep_looping_p())
 
 class TestPlugin(object):
 
-    def test_get_metrics_1(self):
-        base_url = "localhost"
-        port = "5565"
-        path1 = "_metrics"
-        paths = ["foo"]
+    def test_get_metrics_data_1(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN"]
+        metric = {key: metrics[key] for key in keys}
 
         with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
             m = MagicMock()
-            m.read.side_effect = ["""{"foo": 0}"""]
+            m.read.side_effect = ["""{"value": {"arithetic_mean": 0}}"""]
             url_mock.urlopen.return_value = m
-            expected = ([["foo", dict(foo=0)]], [])
-            calls = [call("http://localhost:5565/_metrics/foo"),
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                         dict(value=dict(arithetic_mean=0))},
+                        [])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read()]
 
-            ress = plugin.get_metrics(base_url, port, path1, paths)
+            ress = plugin.get_metrics_data(metric)
 
             assert_equal(ress, expected)
             url_mock.urlopen.assert_has_calls(calls)
 
-    def test_get_metrics_2(self):
-        base_url = "localhost"
-        port = "5565"
-        path1 = "_metrics"
-        paths = ["foo", "bar"]
+    def test_get_metrics_data_2(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_ONE"]
+        metric = {key: metrics[key] for key in keys}
 
         with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
             m = MagicMock()
-            m.read.side_effect = ["""{"foo": 0}""", """{"bar": 0}"""]
+            m.read.side_effect = ["""{"value": {"arithmetic_mean": 0}}""",
+                                  """{"value": {"one": 0}}"""]
             url_mock.urlopen.return_value = m
-            expected = ([["foo", dict(foo=0)], ["bar", dict(bar=0)]], [])
-            calls = [call("http://localhost:5565/_metrics/foo"),
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                         dict(value=dict(arithmetic_mean=0)),
+                         "http://localhost:5565/_metrics/overall.errors":
+                         dict(value=dict(one=0))},
+                        [])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read(),
-                     call("http://localhost:5565/_metrics/bar"),
+                     call("http://localhost:5565/_metrics/overall.errors"),
                      call().read()]
 
-            ress = plugin.get_metrics(base_url, port, path1, paths)
+            ress = plugin.get_metrics_data(metric)
 
             assert_equal(ress, expected)
             url_mock.urlopen.assert_has_calls(calls)
 
-    def test_get_metrics_3(self):
-        base_url = "localhost"
-        port = "5565"
-        path1 = "_metrics"
-        paths = ["foo", "bar"]
+    def test_get_metrics_data_3(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_ONE"]
+        metric = {key: metrics[key] for key in keys}
 
         with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
             m = MagicMock()
-            m.read.side_effect = ["""{"foo": 0}""", IOError()]
+            m.read.side_effect = ["""{"value": {"arithmetic_mean": 0}}""",
+                                  IOError()]
             url_mock.urlopen.return_value = m
-            expected = ([["foo", dict(foo=0)]], ["http://localhost:5565/_metrics/bar"])
-            calls = [call("http://localhost:5565/_metrics/foo"),
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                          dict(value=dict(arithmetic_mean=0))},
+                        ["http://localhost:5565/_metrics/overall.errors"])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
                      call().read(),
-                     call("http://localhost:5565/_metrics/bar"),
+                     call("http://localhost:5565/_metrics/overall.errors"),
                      call().read()]
 
-            ress = plugin.get_metrics(base_url, port, path1, paths)
+            ress = plugin.get_metrics_data(metric)
+
+            assert_equal(ress, expected)
+            url_mock.urlopen.assert_has_calls(calls)
+
+    def test_get_metrics_data_4(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50"]
+        metric = {key: metrics[key] for key in keys}
+
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = ["""{"value": {"percentile": {"50": 0}, "arithmetic_mean": 0}}"""]
+            url_mock.urlopen.return_value = m
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                          dict(value=dict(arithmetic_mean=0,
+                                          percentile={"50": 0}))},
+                        [])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
+                     call().read()]
+
+            ress = plugin.get_metrics_data(metric)
+
+            assert_equal(ress, expected)
+            url_mock.urlopen.assert_has_calls(calls)
+
+    def test_get_metrics_data_5(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50"]
+        metric = {key: metrics[key] for key in keys}
+
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = ["""{"value": 0}"""]
+            url_mock.urlopen.return_value = m
+            expected = ({"http://localhost:5565/_metrics/overall.compute":
+                          dict(value=0)},
+                        [])
+            calls = [call("http://localhost:5565/_metrics/overall.compute"),
+                     call().read()]
+
+            ress = plugin.get_metrics_data(metric)
 
             assert_equal(ress, expected)
             url_mock.urlopen.assert_has_calls(calls)
 
     def test_boundarify_metrics_1(self):
-        metrics_tree = ([], [])
-        ress = plugin.boundarify_metrics(metrics_tree)
+        metrics = plugin.init_metrics()
+        metrics_tree = ({}, [])
+        ress = plugin.boundarify_metrics(metrics, metrics_tree)
         assert_equal(0, len(ress))
 
     def test_boundarify_metrics_2(self):
-        metrics_tree = ([['queue-length-rapi', {u'value': 0}]], [])
-        ress = plugin.boundarify_metrics(metrics_tree)
+        metrics = plugin.init_metrics()
+        metrics_tree = ({"http://localhost:5565/_metrics/queue-length-rapi":
+                         {u'value': 0}},
+                        [])
+        ress = plugin.boundarify_metrics(metrics, metrics_tree)
         assert_equal(1, len(ress))
         assert_equal(dict(STATPRO_RISKAPI_QUEUE_LENGTH_RAPI=0), ress)
 
     def test_boundarify_metrics_3(self):
-        metrics_tree = ([['queue-length-rapi', {u'value': 0}]],
+        metrics = plugin.init_metrics()
+        metrics_tree = ({"http://localhost:5565/_metrics/queue-length-rapi":
+                         {u'value': 0}},
                         ["http://localhost:5565/_metrics/bar"])
-        ress = plugin.boundarify_metrics(metrics_tree)
+        ress = plugin.boundarify_metrics(metrics, metrics_tree)
         assert_equal(1, len(ress))
         assert_equal(dict(STATPRO_RISKAPI_QUEUE_LENGTH_RAPI=0), ress)
 
     def test_boundarify_metrics_4(self):
-        metrics_tree = ([['throughput-rapi',
-                          {u'value': {u'acceleration':
-                                      {u'five_to_fifteen': -7.409488799339047e-06},
-                                      u'count': 107,
-                                      u'one': 0.0006665011787293809}}]], [])
-        ress = plugin.boundarify_metrics(metrics_tree)
+        metrics = plugin.init_metrics()
+        metrics_tree = ({"http://localhost:5565/_metrics/throughput-rapi":
+                         {u'value': {u'acceleration':
+                                     {u'five_to_fifteen': -7.409488799339047e-06},
+                                     u'count': 107,
+                                     u'one': 0.0006665011787293809}}},
+                        [])
+        ress = plugin.boundarify_metrics(metrics, metrics_tree)
         assert_equal(2, len(ress))
         assert_equal(dict(STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT=107,
                           STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE=0.0006665011787293809), ress)
+
+    def test_boundarify_metrics_stateful(self):
+        metrics = plugin.init_metrics()
+        keys = ["STATPRO_RISKAPI_OVERALL_ERRORS_COUNT"]
+        metric = {key: metrics[key] for key in keys}
+
+        metrics_tree = ({"http://localhost:5565/_metrics/overall.errors":
+                         {u'value': {u'count': 107}}},
+                        [])
+        ress = plugin.boundarify_metrics(metric, metrics_tree)
+        assert_equal(1, len(ress))
+        assert_equal(dict(STATPRO_RISKAPI_OVERALL_ERRORS_COUNT=107), ress)
+
+        metrics_tree = ({"http://localhost:5565/_metrics/overall.errors":
+                         {u'value': {u'count': 110}}},
+                        [])
+        ress = plugin.boundarify_metrics(metric, metrics_tree)
+        assert_equal(1, len(ress))
+        assert_equal(dict(STATPRO_RISKAPI_OVERALL_ERRORS_COUNT=3), ress)
 
     def test_report_metrics_1(self):
         metrics = [("metric_foo_bar", 3), ("metric_foo_baz", 4),
@@ -253,7 +253,78 @@ class TestPlugin(object):
 
         assert_equal(fake_out.getvalue(), expected)
 
-    def test_do_your_job(self):
-        with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
-            with patch("boundary_riskapi_plugin.plugin.keep_looping_p", side_effect=[True, False]):
-                plugin.do_your_job()
+    def test_main_ok(self):
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = [
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}""",
+                """{"value": {"count": 0, "one": 0}}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": 0}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}"""]
+            url_mock.urlopen.return_value = m
+
+            expected_lines = set([
+                "STATPRO_RISKAPI_OVERALL_THROUGHPUT_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_THROUGHPUT_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI 0 mmori 123456789"])
+            with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
+                with patch("boundary_riskapi_plugin.plugin.keep_looping_p",
+                           side_effect=[True, False]):
+                    with patch("sys.stdout", new=StringIO()) as fake_out:
+                        with patch("time.time", return_value=123456789):
+                            plugin.main()
+                            resulting_lines = set(fake_out.getvalue().splitlines())
+                            assert_equal(resulting_lines, expected_lines)
+
+    def test_main_failure(self):
+        with patch("boundary_riskapi_plugin.plugin.urllib") as url_mock:
+            m = MagicMock()
+            m.read.side_effect = [
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}""",
+                """{"value": 0}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": 0}""",
+                """{"value": {"percentile": {"50": 0, "95": 0}, "arithmetic_mean": 0}}""",
+                """{"value": {"count": 0, "one": 0}}"""]
+            url_mock.urlopen.return_value = m
+
+            expected_lines = set([
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_THROUGHPUT_RAPI_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_ARITHMETIC_MEAN 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_TIME_PERCENTILE_95 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_COMPUTE_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_ONE 0 mmori 123456789",
+                "STATPRO_RISKAPI_REQUEST_TIME_QUEUE_RAPI_PERCENTILE_50 0 mmori 123456789",
+                "STATPRO_RISKAPI_OVERALL_ERRORS_COUNT 0 mmori 123456789",
+                "STATPRO_RISKAPI_QUEUE_LENGTH_RAPI 0 mmori 123456789"])
+            with patch("boundary_riskapi_plugin.plugin.POLL_INTERVAL", 0):
+                with patch("boundary_riskapi_plugin.plugin.keep_looping_p",
+                           side_effect=[True, False]):
+                    with patch("sys.stdout", new=StringIO()) as fake_out:
+                        with patch("time.time", return_value=123456789):
+                            plugin.main()
+                            resulting_lines = set(fake_out.getvalue().splitlines())
+                            assert_equal(resulting_lines, expected_lines)
